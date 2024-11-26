@@ -223,32 +223,6 @@ export default function Page() {
 
       {solution && (
         <div className="mt-4">
-          <h2 className="text-2xl font-semibold mb-2">Solution</h2>
-          <p>
-            Optimal Value:{" "}
-            {-solution.tableau[0][solution.tableau[0].length - 1].toFixed(1)}
-          </p>
-          <h3 className="text-2xl font-semibold mt-2 mb-2">Variables:</h3>
-          <ul>
-            {Array(numVars)
-              .fill(0)
-              .map((_, i) => {
-                let value = 0;
-                for (let row = 1; row < solution.tableau.length; row++) {
-                  if (Math.abs(solution.tableau[row][i] - 1) < 0.000001) {
-                    value =
-                      solution.tableau[row][solution.tableau[0].length - 1];
-                    break;
-                  }
-                }
-                return (
-                  <li key={i}>
-                    x{i + 1} = {value.toFixed(1)}
-                  </li>
-                );
-              })}
-          </ul>
-
           <h3 className="text-2xl font-semibold mt-4 mb-2">Iterations:</h3>
           {solution.iterations.map((iteration: any, index: number) => (
             <div key={index} className="mb-4">
@@ -294,6 +268,31 @@ export default function Page() {
               </Table>
             </div>
           ))}
+          <h2 className="text-2xl font-semibold mb-2">Solution</h2>
+          <p>
+            Optimal Value:{" "}
+            {-solution.tableau[0][solution.tableau[0].length - 1].toFixed(1)}
+          </p>
+          <h3 className="text-2xl font-semibold mt-2 mb-2">Variables:</h3>
+          <ul>
+            {Array(numVars)
+              .fill(0)
+              .map((_, i) => {
+                let value = 0;
+                for (let row = 1; row < solution.tableau.length; row++) {
+                  if (Math.abs(solution.tableau[row][i] - 1) < 0.000001) {
+                    value =
+                      solution.tableau[row][solution.tableau[0].length - 1];
+                    break;
+                  }
+                }
+                return (
+                  <li key={i}>
+                    x{i + 1} = {value.toFixed(1)}
+                  </li>
+                );
+              })}
+          </ul>
         </div>
       )}
     </div>
