@@ -5,6 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Table,
   TableBody,
   TableCell,
@@ -16,6 +23,7 @@ import {
 export default function Page() {
   const [numVars, setNumVars] = useState(2);
   const [numConstraints, setNumConstraints] = useState(2);
+  const [objectiveType, setObjectiveType] = useState<"Max" | "Min">("Max");
   const [objectiveCoeffs, setObjectiveCoeffs] = useState<number[]>([1, 1]);
   const [constraints, setConstraints] = useState<number[][]>([
     [1, 1],
@@ -23,15 +31,32 @@ export default function Page() {
   ]);
   const [rhs, setRhs] = useState<number[]>([5, 5]);
   const [solution, setSolution] = useState<any>(null);
+  const [pivotCells, setPivotCells] = useState<{ row: number; col: number }[]>(
+    []
+  );
 
   useEffect(() => {
-    generateInputs();
+    generateRandomInputs();
   }, [numVars, numConstraints]);
 
-  const generateInputs = () => {
-    setObjectiveCoeffs(Array(numVars).fill(1));
-    setConstraints(Array(numConstraints).fill(Array(numVars).fill(1)));
-    setRhs(Array(numConstraints).fill(5));
+  const generateRandomInputs = () => {
+    const randomCoeffs = Array(numVars)
+      .fill(0)
+      .map(() => Math.floor(Math.random() * 10) + 1);
+    const randomConstraints = Array(numConstraints)
+      .fill(0)
+      .map(() =>
+        Array(numVars)
+          .fill(0)
+          .map(() => Math.floor(Math.random() * 10) + 1)
+      );
+    const randomRhs = Array(numConstraints)
+      .fill(0)
+      .map(() => Math.floor(Math.random() * 50) + 10);
+
+    setObjectiveCoeffs(randomCoeffs);
+    setConstraints(randomConstraints);
+    setRhs(randomRhs);
   };
 
   const updateObjectiveCoeff = (index: number, value: number) => {
@@ -54,12 +79,13 @@ export default function Page() {
   };
 
   const solve = () => {
-    // Create initial tableau
-    let tableau = createTableau(objectiveCoeffs, constraints, rhs);
-
-    // Solve using simplex method
+    const multiplier = objectiveType === "Max" ? 1 : -1;
+    let tableau = createTableau(
+      objectiveCoeffs.map((c) => multiplier * c),
+      constraints,
+      rhs
+    );
     let result = simplexMethod(tableau, numVars, numConstraints);
-
     setSolution(result);
   };
 
@@ -92,6 +118,7 @@ export default function Page() {
     let basicVars = Array(numConstraints)
       .fill(0)
       .map((_, i) => numVars + i);
+    let pivotHistory: { row: number; col: number }[] = [];
 
     while (iteration < maxIterations) {
       iterations.push({
@@ -99,25 +126,24 @@ export default function Page() {
         basicVars: [...basicVars],
       });
 
-      // Find pivot column (most positive entry in objective row)
       let pivotCol = tableau[0]
         .slice(0, -1)
         .indexOf(Math.max(...tableau[0].slice(0, -1)));
-      if (tableau[0][pivotCol] <= 0) break; // Optimal solution found
+      if (tableau[0][pivotCol] <= 0) break;
 
-      // Find pivot row (minimum ratio test)
       let ratios = tableau
         .slice(1)
         .map((row) =>
           row[pivotCol] <= 0 ? Infinity : row[row.length - 1] / row[pivotCol]
         );
       let pivotRow = ratios.indexOf(Math.min(...ratios)) + 1;
-      if (pivotRow === 0) return null; // Unbounded solution
+      if (pivotRow === 0) return null;
 
-      // Update basic variables
+      // Store pivot cell position
+      pivotHistory.push({ row: pivotRow, col: pivotCol });
+
       basicVars[pivotRow - 1] = pivotCol;
 
-      // Perform pivot operation
       let pivot = tableau[pivotRow][pivotCol];
       tableau = tableau.map((row, i) =>
         i === pivotRow
@@ -131,15 +157,26 @@ export default function Page() {
       iteration++;
     }
 
+    setPivotCells(pivotHistory);
     return { tableau, iterations };
+  };
+
+  const isPivotCell = (
+    iterationIndex: number,
+    rowIndex: number,
+    colIndex: number
+  ) => {
+    if (!pivotCells[iterationIndex]) return false;
+    const pivot = pivotCells[iterationIndex];
+    return pivot.row === rowIndex && pivot.col === colIndex;
   };
 
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-3xl font-semibold mb-5">Simplex Method Calculator</h1>
 
-      <div className="mb-4 flex flex-col sm:flex-row justify-center items-center">
-        <Label htmlFor="numVars" className="m-2 text-lg">
+      <div className="mb-4 flex flex-col sm:flex-row justify-center items-center gap-4">
+        <Label htmlFor="numVars" className="text-lg">
           Number of Variables:
         </Label>
         <Input
@@ -150,7 +187,7 @@ export default function Page() {
           onChange={(e) => setNumVars(parseInt(e.target.value))}
           className="w-20"
         />
-        <Label htmlFor="numConstraints" className="m-2 text-lg">
+        <Label htmlFor="numConstraints" className="text-lg">
           Number of Constraints:
         </Label>
         <Input
@@ -161,15 +198,26 @@ export default function Page() {
           onChange={(e) => setNumConstraints(parseInt(e.target.value))}
           className="w-20"
         />
+        <Button onClick={generateRandomInputs}>Generate Random Values</Button>
       </div>
 
       <div className="flex flex-col justify-center items-center mt-5">
         <div className="mb-5">
-          <h2 className="text-xl font-semibold mb-2">
-            Objective Function (Maximize)
-          </h2>
-          <div className="flex items-center">
-            Z =
+          <h2 className="text-xl font-semibold mb-2">Objective Function</h2>
+          <div className="flex items-center gap-2 mb-2">
+            <Select
+              value={objectiveType}
+              onValueChange={(value: "Max" | "Min") => setObjectiveType(value)}
+            >
+              <SelectTrigger className="w-24">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Max">Max</SelectItem>
+                <SelectItem value="Min">Min</SelectItem>
+              </SelectContent>
+            </Select>
+            <span>Z =</span>
             {objectiveCoeffs.map((coeff, index) => (
               <div key={index} className="flex items-center">
                 <Input
@@ -235,7 +283,7 @@ export default function Page() {
                       .slice(0, -1)
                       .map((_: number, i: number) => (
                         <TableHead key={i}>
-                          {i < numVars ? `x${i + 1}` : `t${i - numVars + 1}`}
+                          {i < numVars ? `x${i + 1}` : `s${i - numVars + 1}`}
                         </TableHead>
                       ))}
                     <TableHead>R</TableHead>
@@ -249,10 +297,19 @@ export default function Page() {
                         <TableCell>
                           {iteration.basicVars[rowIndex] < numVars
                             ? `x${iteration.basicVars[rowIndex] + 1}`
-                            : `t${iteration.basicVars[rowIndex] - numVars + 1}`}
+                            : `s${iteration.basicVars[rowIndex] - numVars + 1}`}
                         </TableCell>
                         {row.map((val, colIndex) => (
-                          <TableCell key={colIndex}>{val.toFixed(1)}</TableCell>
+                          <TableCell
+                            key={colIndex}
+                            className={
+                              isPivotCell(index, rowIndex + 1, colIndex)
+                                ? "bg-red-200"
+                                : ""
+                            }
+                          >
+                            {val.toFixed(1)}
+                          </TableCell>
                         ))}
                       </TableRow>
                     ))}
@@ -271,7 +328,8 @@ export default function Page() {
           <h2 className="text-2xl font-semibold mb-2">Solution</h2>
           <p>
             Optimal Value:{" "}
-            {-solution.tableau[0][solution.tableau[0].length - 1].toFixed(1)}
+            {(objectiveType === "Max" ? -1 : 1) *
+              solution.tableau[0][solution.tableau[0].length - 1].toFixed(1)}
           </p>
           <h3 className="text-2xl font-semibold mt-2 mb-2">Variables:</h3>
           <ul>
