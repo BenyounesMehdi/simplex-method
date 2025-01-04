@@ -4,13 +4,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+
 import {
   Table,
   TableBody,
@@ -23,7 +17,6 @@ import {
 export default function Page() {
   const [numVars, setNumVars] = useState(2);
   const [numConstraints, setNumConstraints] = useState(2);
-  const [objectiveType, setObjectiveType] = useState<"Max" | "Min">("Max");
   const [objectiveCoeffs, setObjectiveCoeffs] = useState<number[]>([1, 1]);
   const [constraints, setConstraints] = useState<number[][]>([
     [1, 1],
@@ -79,7 +72,7 @@ export default function Page() {
   };
 
   const solve = () => {
-    const multiplier = objectiveType === "Max" ? 1 : -1;
+    const multiplier = 1;
     let tableau = createTableau(
       objectiveCoeffs.map((c) => multiplier * c),
       constraints,
@@ -139,7 +132,6 @@ export default function Page() {
       let pivotRow = ratios.indexOf(Math.min(...ratios)) + 1;
       if (pivotRow === 0) return null;
 
-      // Store pivot cell position
       pivotHistory.push({ row: pivotRow, col: pivotCol });
 
       basicVars[pivotRow - 1] = pivotCol;
@@ -173,8 +165,6 @@ export default function Page() {
 
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-3xl font-semibold mb-5">Simplex Method Calculator</h1>
-
       <div className="mb-4 flex flex-col sm:flex-row justify-center items-center gap-4">
         <Label htmlFor="numVars" className="text-lg">
           Number of Variables:
@@ -205,19 +195,7 @@ export default function Page() {
         <div className="mb-5">
           <h2 className="text-xl font-semibold mb-2">Objective Function</h2>
           <div className="flex items-center gap-2 mb-2">
-            <Select
-              value={objectiveType}
-              onValueChange={(value: "Max" | "Min") => setObjectiveType(value)}
-            >
-              <SelectTrigger className="w-24">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Max">Max</SelectItem>
-                <SelectItem value="Min">Min</SelectItem>
-              </SelectContent>
-            </Select>
-            <span>Z =</span>
+            <span>Max Z =</span>
             {objectiveCoeffs.map((coeff, index) => (
               <div key={index} className="flex items-center">
                 <Input
@@ -271,14 +249,14 @@ export default function Page() {
 
       {solution && (
         <div className="mt-4">
-          <h3 className="text-2xl font-semibold mt-4 mb-2">Iterations:</h3>
+          <h3 className="text-2xl font-semibold mt-4 mb-2">Tables:</h3>
           {solution.iterations.map((iteration: any, index: number) => (
             <div key={index} className="mb-4">
-              <h4 className="font-semibold">Iteration {index}:</h4>
+              <h4 className="font-semibold">Tab {index}:</h4>
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Basic</TableHead>
+                    <TableHead>Base</TableHead>
                     {iteration.tableau[0]
                       .slice(0, -1)
                       .map((_: number, i: number) => (
@@ -286,7 +264,7 @@ export default function Page() {
                           {i < numVars ? `x${i + 1}` : `s${i - numVars + 1}`}
                         </TableHead>
                       ))}
-                    <TableHead>R</TableHead>
+                    <TableHead>C</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -304,7 +282,7 @@ export default function Page() {
                             key={colIndex}
                             className={
                               isPivotCell(index, rowIndex + 1, colIndex)
-                                ? "bg-red-200"
+                                ? "bg-red-500"
                                 : ""
                             }
                           >
@@ -314,7 +292,7 @@ export default function Page() {
                       </TableRow>
                     ))}
                   <TableRow>
-                    <TableCell>Z</TableCell>
+                    <TableCell>&#916; </TableCell>
                     {iteration.tableau[0].map(
                       (val: number, colIndex: number) => (
                         <TableCell key={colIndex}>{val.toFixed(1)}</TableCell>
@@ -328,8 +306,7 @@ export default function Page() {
           <h2 className="text-2xl font-semibold mb-2">Solution</h2>
           <p>
             Optimal Value:{" "}
-            {(objectiveType === "Max" ? -1 : 1) *
-              solution.tableau[0][solution.tableau[0].length - 1].toFixed(1)}
+            {-solution.tableau[0][solution.tableau[0].length - 1].toFixed(1)}
           </p>
           <h3 className="text-2xl font-semibold mt-2 mb-2">Variables:</h3>
           <ul>
