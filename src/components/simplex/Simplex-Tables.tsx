@@ -8,14 +8,12 @@ import {
 } from "@/components/ui/table";
 import SimplexSolution from "./Simplex-Solution";
 
-type Iteration = {
-  tableau: number[][];
-  basicVars: number[];
-};
-
 type Solution = {
-  iterations: Iteration[];
   tableau: number[][];
+  iterations: {
+    tableau: number[][];
+    basicVars: number[];
+  }[];
 };
 
 type SimplexSolutionProps = {

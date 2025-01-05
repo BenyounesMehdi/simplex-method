@@ -17,7 +17,15 @@ export default function Page() {
     [1, 1],
   ]);
   const [rhs, setRhs] = useState<number[]>([5, 5]);
-  const [solution, setSolution] = useState<any>(null);
+  type Solution = {
+    tableau: number[][];
+    iterations: {
+      tableau: number[][];
+      basicVars: number[];
+    }[];
+  };
+
+  const [solution, setSolution] = useState<Solution | null>(null);
   const [pivotCells, setPivotCells] = useState<{ row: number; col: number }[]>(
     []
   );
@@ -188,7 +196,7 @@ export default function Page() {
       </div>
 
       <SimplexTables
-        solution={solution}
+        solution={solution as Solution}
         numVars={numVars}
         isPivotCell={isPivotCell}
       />
