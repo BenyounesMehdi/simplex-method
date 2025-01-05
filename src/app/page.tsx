@@ -2,17 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import VariablesConstraintsInputs from "@/components/simplex/Variables-Constraints-Inputs";
+import ObjectiveFunctionInput from "@/components/simplex/Objective-Function-Input";
+import ConstraintsInputs from "@/components/simplex/Constraints-Inputs";
+import SimplexTables from "@/components/simplex/Simplex-Tables";
 
 export default function Page() {
   const [numVars, setNumVars] = useState(2);
@@ -165,171 +159,39 @@ export default function Page() {
 
   return (
     <div className="container mx-auto p-4">
-      <div className="mb-4 flex flex-col sm:flex-row justify-center items-center gap-4">
-        <Label htmlFor="numVars" className="text-lg">
-          Number of Variables:
-        </Label>
-        <Input
-          id="numVars"
-          type="number"
-          min="2"
-          value={numVars}
-          onChange={(e) => setNumVars(parseInt(e.target.value))}
-          className="w-20"
-        />
-        <Label htmlFor="numConstraints" className="text-lg">
-          Number of Constraints:
-        </Label>
-        <Input
-          id="numConstraints"
-          type="number"
-          min="1"
-          value={numConstraints}
-          onChange={(e) => setNumConstraints(parseInt(e.target.value))}
-          className="w-20"
-        />
-        <Button onClick={generateRandomInputs}>Generate Random Values</Button>
-      </div>
+      <VariablesConstraintsInputs
+        numVars={numVars}
+        setNumVars={setNumVars}
+        numConstraints={numConstraints}
+        setNumConstraints={setNumConstraints}
+        generateRandomInputs={generateRandomInputs}
+      />
 
       <div className="flex flex-col justify-center items-center mt-5">
-        <div className="mb-5">
-          <h2 className="text-xl font-semibold mb-2">Objective Function</h2>
-          <div className="flex items-center gap-2 mb-2">
-            <span>Max Z =</span>
-            {objectiveCoeffs.map((coeff, index) => (
-              <div key={index} className="flex items-center">
-                <Input
-                  type="number"
-                  value={coeff}
-                  onChange={(e) =>
-                    updateObjectiveCoeff(index, parseFloat(e.target.value))
-                  }
-                  className="w-20 mx-1"
-                />
-                <span>x{index + 1}</span>
-                {index < numVars - 1 && <span className="mx-1">+</span>}
-              </div>
-            ))}
-          </div>
-        </div>
+        <ObjectiveFunctionInput
+          objectiveCoeffs={objectiveCoeffs}
+          updateObjectiveCoeff={updateObjectiveCoeff}
+          numVars={numVars}
+        />
 
-        <div className="mb-4">
-          <h2 className="text-xl font-semibold mb-2">Constraints</h2>
-          {constraints.map((row, i) => (
-            <div key={i} className="flex items-center my-2">
-              {row.map((coeff, j) => (
-                <div key={j} className="flex items-center">
-                  <Input
-                    type="number"
-                    value={coeff}
-                    onChange={(e) =>
-                      updateConstraint(i, j, parseFloat(e.target.value))
-                    }
-                    className="w-20 mx-1"
-                  />
-                  <span>x{j + 1}</span>
-                  {j < numVars - 1 && <span className="mx-1">+</span>}
-                </div>
-              ))}
-              <span className="mx-2">≤</span>
-              <Input
-                type="number"
-                value={rhs[i]}
-                onChange={(e) => updateRhs(i, parseFloat(e.target.value))}
-                className="w-20"
-              />
-            </div>
-          ))}
-        </div>
+        <ConstraintsInputs
+          constraints={constraints}
+          updateConstraint={updateConstraint}
+          numVars={numVars}
+          rhs={rhs}
+          updateRhs={updateRhs}
+        />
       </div>
 
       <div className="flex justify-center">
         <Button onClick={solve}>Solve</Button>
       </div>
 
-      {solution && (
-        <div className="mt-4">
-          <h3 className="text-2xl font-semibold mt-4 mb-2">Tables:</h3>
-          {solution.iterations.map((iteration: any, index: number) => (
-            <div key={index} className="mb-4">
-              <h4 className="font-semibold">Tab {index}:</h4>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Base</TableHead>
-                    {iteration.tableau[0]
-                      .slice(0, -1)
-                      .map((_: number, i: number) => (
-                        <TableHead key={i}>
-                          {i < numVars ? `x${i + 1}` : `s${i - numVars + 1}`}
-                        </TableHead>
-                      ))}
-                    <TableHead>C</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {iteration.tableau
-                    .slice(1)
-                    .map((row: number[], rowIndex: number) => (
-                      <TableRow key={rowIndex}>
-                        <TableCell>
-                          {iteration.basicVars[rowIndex] < numVars
-                            ? `x${iteration.basicVars[rowIndex] + 1}`
-                            : `s${iteration.basicVars[rowIndex] - numVars + 1}`}
-                        </TableCell>
-                        {row.map((val, colIndex) => (
-                          <TableCell
-                            key={colIndex}
-                            className={
-                              isPivotCell(index, rowIndex + 1, colIndex)
-                                ? "bg-red-500"
-                                : ""
-                            }
-                          >
-                            {val.toFixed(1)}
-                          </TableCell>
-                        ))}
-                      </TableRow>
-                    ))}
-                  <TableRow>
-                    <TableCell>&#916; </TableCell>
-                    {iteration.tableau[0].map(
-                      (val: number, colIndex: number) => (
-                        <TableCell key={colIndex}>{val.toFixed(1)}</TableCell>
-                      )
-                    )}
-                  </TableRow>
-                </TableBody>
-              </Table>
-            </div>
-          ))}
-          <h2 className="text-2xl font-semibold mb-2">Solution</h2>
-          <p>
-            Optimal Value:{" "}
-            {-solution.tableau[0][solution.tableau[0].length - 1].toFixed(1)}
-          </p>
-          <h3 className="text-2xl font-semibold mt-2 mb-2">Variables:</h3>
-          <ul>
-            {Array(numVars)
-              .fill(0)
-              .map((_, i) => {
-                let value = 0;
-                for (let row = 1; row < solution.tableau.length; row++) {
-                  if (Math.abs(solution.tableau[row][i] - 1) < 0.000001) {
-                    value =
-                      solution.tableau[row][solution.tableau[0].length - 1];
-                    break;
-                  }
-                }
-                return (
-                  <li key={i}>
-                    x{i + 1} = {value.toFixed(1)}
-                  </li>
-                );
-              })}
-          </ul>
-        </div>
-      )}
+      <SimplexTables
+        solution={solution}
+        numVars={numVars}
+        isPivotCell={isPivotCell}
+      />
     </div>
   );
 }

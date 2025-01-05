@@ -14,7 +14,7 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Simplex Method Calculator",
+  title: "Simplex Method",
   description:
     "A web-based calculator for solving linear programming problems using the Simplex method. Input your objective function and constraints to find optimal solutions.",
 };
