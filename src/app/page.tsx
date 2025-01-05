@@ -77,7 +77,7 @@ export default function Page() {
     constraints: number[][],
     rhs: number[]
   ) => {
-    let tableau = [
+    const tableau = [
       [...objectiveCoeffs, ...Array(numConstraints).fill(0), 0],
       ...constraints.map((row, i) => [
         ...row,
@@ -126,7 +126,7 @@ export default function Page() {
 
       basicVars[pivotRow - 1] = pivotCol;
 
-      let pivot = tableau[pivotRow][pivotCol];
+      const pivot = tableau[pivotRow][pivotCol];
       tableau = tableau.map((row, i) =>
         i === pivotRow
           ? row.map((val) => val / pivot)
