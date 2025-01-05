@@ -1,5 +1,7 @@
 type SimplexSolutionProps = {
-  solution: any;
+  solution: {
+    tableau: number[][];
+  };
   numVars: number;
 };
 
