@@ -22,10 +22,6 @@ export default function Page() {
     []
   );
 
-  useEffect(() => {
-    generateRandomInputs();
-  }, [numVars, numConstraints]);
-
   const generateRandomInputs = () => {
     const randomCoeffs = Array(numVars)
       .fill(0)
@@ -67,12 +63,12 @@ export default function Page() {
 
   const solve = () => {
     const multiplier = 1;
-    let tableau = createTableau(
+    const tableau = createTableau(
       objectiveCoeffs.map((c) => multiplier * c),
       constraints,
       rhs
     );
-    let result = simplexMethod(tableau, numVars, numConstraints);
+    const result = simplexMethod(tableau, numVars, numConstraints);
     setSolution(result);
   };
 
@@ -99,13 +95,13 @@ export default function Page() {
     numVars: number,
     numConstraints: number
   ) => {
-    let iterations = [];
+    const iterations = [];
     let iteration = 0;
     const maxIterations = 100;
-    let basicVars = Array(numConstraints)
+    const basicVars = Array(numConstraints)
       .fill(0)
       .map((_, i) => numVars + i);
-    let pivotHistory: { row: number; col: number }[] = [];
+    const pivotHistory: { row: number; col: number }[] = [];
 
     while (iteration < maxIterations) {
       iterations.push({
@@ -113,17 +109,17 @@ export default function Page() {
         basicVars: [...basicVars],
       });
 
-      let pivotCol = tableau[0]
+      const pivotCol = tableau[0]
         .slice(0, -1)
         .indexOf(Math.max(...tableau[0].slice(0, -1)));
       if (tableau[0][pivotCol] <= 0) break;
 
-      let ratios = tableau
+      const ratios = tableau
         .slice(1)
         .map((row) =>
           row[pivotCol] <= 0 ? Infinity : row[row.length - 1] / row[pivotCol]
         );
-      let pivotRow = ratios.indexOf(Math.min(...ratios)) + 1;
+      const pivotRow = ratios.indexOf(Math.min(...ratios)) + 1;
       if (pivotRow === 0) return null;
 
       pivotHistory.push({ row: pivotRow, col: pivotCol });
@@ -156,6 +152,10 @@ export default function Page() {
     const pivot = pivotCells[iterationIndex];
     return pivot.row === rowIndex && pivot.col === colIndex;
   };
+
+  useEffect(() => {
+    generateRandomInputs();
+  }, [numVars, numConstraints]);
 
   return (
     <div className="container mx-auto p-4">
